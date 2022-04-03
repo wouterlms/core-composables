@@ -13,8 +13,8 @@ import axios,
 import { HttpMethod } from '../enums'
 
 type GetOverload<T> = {
-  (id: string | number): Promise<AxiosResponse<{ data: Readonly<T> }>>
-  (): Promise<AxiosResponse<{ data: Readonly<T[]> }>>
+  (id: string | number): Promise<AxiosResponse<Readonly<T>>>
+  (): Promise<AxiosResponse<Readonly<T[]>>>
 }
 
 type Options<R> = {
@@ -26,12 +26,13 @@ type Crud<T> = {
   one: Readonly<Ref<T | null>>,
   all: Readonly<Ref<NonNullable<T>[]>>,
   isLoading: Readonly<Ref<boolean>>
-  delete: (id: string | number) => Promise<AxiosResponse<{ data: null }>>
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  delete: (id: string | number) => Promise<AxiosResponse<{}>>
   get: GetOverload<T>
   post: (data: Partial<Record<keyof T, unknown>> | FormData) =>
-    Promise<AxiosResponse<{ data: NonNullable<T> }>>
+    Promise<AxiosResponse<NonNullable<T>>>
   put: (data: Partial<Record<keyof T, unknown>> & { id: number | string } | FormData) =>
-    Promise<AxiosResponse<{ data: NonNullable<T> }>>
+    Promise<AxiosResponse<NonNullable<T>>>
   cancelRequest: () => void
 }
 
@@ -89,14 +90,15 @@ export default <
   }
 
   const get: GetOverload<T> = (id?: string | number) => {
-    const request = buildRequest<{ data:(typeof id extends undefined ? T[] : T) }>(
-      HttpMethod.GET, id ? `${baseUrl}/${id}` : baseUrl)
+    const request = buildRequest<typeof id extends undefined ? T[] : T>(
+      HttpMethod.GET, id ? `${baseUrl}/${id}` : baseUrl
+    )
 
     request.then(({ data }) => {
       if (id) {
-        one.value = data.data
+        one.value = data
       } else {
-        all.value = data.data as unknown as NonNullable<T>[]
+        all.value = data as unknown as NonNullable<T>[]
       }
     })
 
@@ -104,13 +106,13 @@ export default <
     return request as any
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
   const deleteOne = (
     id: number | string
-  ) => buildRequest<{ data: null }>(HttpMethod.DELETE, `${baseUrl}/${id}`)
+    // eslint-disable-next-line @typescript-eslint/ban-types
+  ) => buildRequest<{}>(HttpMethod.DELETE, `${baseUrl}/${id}`)
 
   const post = (data: Partial<Record<keyof T, unknown>> | FormData) => (
-    buildRequest<{ data: NonNullable<T> }>(
+    buildRequest<NonNullable<T>>(
       HttpMethod.POST, baseUrl, data
     )
   )
@@ -121,12 +123,12 @@ export default <
 
       const id = data.get('id')
 
-      return buildRequest<{ data: NonNullable<T> }>(
+      return buildRequest<NonNullable<T>>(
         HttpMethod.POST, `${baseUrl}${id ? `/${id}` : ''}`, data
       )
     }
 
-    return buildRequest<{ data: NonNullable<T> }>(
+    return buildRequest<NonNullable<T>>(
       HttpMethod.PUT, `${baseUrl}${data.id ? `/${data.id}` : ''}`, data
     )
   }
