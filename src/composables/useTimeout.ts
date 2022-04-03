@@ -3,17 +3,20 @@ import { onBeforeUnmount } from 'vue'
 export default (
   fn: (...args: unknown[]) => unknown,
   ms: number, options: { immediate: boolean } = { immediate: true }
-) => {
+): {
+    start: () => void
+    stop: () => void
+  } => {
   const { immediate } = options
   let timeout: ReturnType<typeof setTimeout> | null = null
 
-  const stop = () => {
-    if (timeout) {
+  const stop = (): void => {
+    if (timeout !== null) {
       clearTimeout(timeout)
     }
   }
 
-  const start = () => {
+  const start = (): void => {
     stop()
 
     timeout = setTimeout(() => {
@@ -31,6 +34,6 @@ export default (
 
   return {
     start,
-    stop,
+    stop
   }
 }

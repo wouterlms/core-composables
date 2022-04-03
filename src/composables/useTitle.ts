@@ -2,15 +2,19 @@ import {
   ComputedRef,
   Ref,
   ref,
-  watch,
+  watch
 } from 'vue'
 
 const template = ref('{title}')
 
-export default () => {
+export default (): {
+  documentTitle: Ref<string>
+  setTemplate: (title: string) => void
+  syncDocumentTitle: (value: Ref<string | null> | ComputedRef<string | null>) => void
+} => {
   const documentTitle = ref<string>(document.title)
 
-  const setTemplate = (title: string) => {
+  const setTemplate = (title: string): void => {
     if (!title.includes('{title}')) {
       throw Error('Template must contain \'{title}\'')
     }
@@ -18,14 +22,14 @@ export default () => {
     template.value = title
   }
 
-  const setTitle = (title: string) => {
+  const setTitle = (title: string): void => {
     document.title = template.value.replace('{title}', title)
   }
 
-  const syncDocumentTitle = (value: Ref<string | null> | ComputedRef<string | null>) => {
+  const syncDocumentTitle = (value: Ref<string | null> | ComputedRef<string | null>): void => {
     watch(
       value, () => {
-        if (value.value) {
+        if (typeof value.value === 'string') {
           setTitle(value.value)
         }
       }, { immediate: true }
@@ -41,6 +45,6 @@ export default () => {
   return {
     documentTitle,
     setTemplate,
-    syncDocumentTitle,
+    syncDocumentTitle
   }
 }

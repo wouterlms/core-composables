@@ -1,9 +1,8 @@
 import {
   Ref,
-  computed,
   isRef,
   ref,
-  watch,
+  watch
 } from 'vue'
 
 import axios from 'axios'
@@ -18,72 +17,65 @@ interface Pagination {
   page: number
 }
 
-type Options<R> = {
-  replaceOnFetch?: boolean,
+interface Options {
+  replaceOnFetch?: boolean
   hasContainer?: boolean
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transformer?: (obj: any) => R,
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type InferReturnType<U, V> = U extends Options<infer R> ? U['transformer'] extends Function ? R : V : V
-
-export default <
-  R,
-  O extends Options<unknown> = Options<unknown>,
-  T = InferReturnType<O, R>
->(
+export default <R, O extends Options = Options>(
   url: string | Ref<string>,
   options: O = {
     replaceOnFetch: false,
-    hasContainer: false,
-  } as O
-) => {
+    hasContainer: false
+  } as unknown as O
+): {
+  results: Ref<R[]>
+  pagination: Ref<{
+    previous: string | null
+    next: string | null
+    total: number
+    pages: number
+    page: number
+  } | null>
+  isLoading: Ref<boolean>
+  fetchPrevious: () => Promise<void>
+  fetchNext: (resetResults?: boolean | undefined) => Promise<void>
+  refresh: () => Promise<void>
+} => {
   const urlRef = isRef(url) ? url : ref(url)
 
   const {
     replaceOnFetch,
-    hasContainer,
-    transformer,
+    hasContainer
   } = options
 
   const pagination = ref<Pagination | null>(null)
 
-  const results = ref<T[]>([]) as Ref<T[]>
-  const resultsTransformed = transformer
-    ? computed<T[]>({
-      get() {
-        return results.value.map((v) => transformer(v))as T[]
-      },
-      set(value: T[]) {
-        results.value = value
-      },
-    })
-    : undefined
+  const results = ref<R[]>([]) as Ref<R[]>
 
   const isLoading = ref(false)
 
   const setData = (data: {
-    data: T[],
-    links: { next: string | null, previous: string | null },
+    data: R[]
+    links: { next: string | null, previous: string | null }
     meta: { total: number, pages: number, page: number }
-  }) => {
-    if (replaceOnFetch) {
+  }): void => {
+    if (replaceOnFetch === true) {
       results.value = data.data
     } else {
-      results.value = [ ...results.value || [], ...data.data ]
+      results.value = [...results.value, ...data.data]
     }
 
     isLoading.value = false
 
     pagination.value = {
       ...data.meta,
-      ...data.links,
+      ...data.links
     }
   }
 
-  const fetchPrevious = async () => {
-    if (pagination.value?.previous && !isLoading.value) {
+  const fetchPrevious = async (): Promise<void> => {
+    if (typeof pagination.value?.previous === 'string' && !isLoading.value) {
       isLoading.value = true
 
       const { data } = await axios.get(pagination.value.previous)
@@ -92,7 +84,7 @@ export default <
     }
   }
 
-  const refresh = async () => {
+  const refresh = async (): Promise<void> => {
     isLoading.value = true
 
     const { data } = await axios.get(urlRef.value)
@@ -102,25 +94,24 @@ export default <
     setData(data)
   }
 
-  const fetchNext = async (resetResults?: boolean) => {
-    if (isLoading.value || (pagination.value && !pagination.value?.next)) {
+  const fetchNext = async (resetResults?: boolean): Promise<void> => {
+    if (isLoading.value || ((pagination.value != null) && typeof pagination.value?.next === 'string')) {
       return
     }
 
-    const url = pagination.value?.next || urlRef.value
-
     isLoading.value = true
 
+    const url = typeof pagination.value?.next === 'string' ? pagination.value.next : urlRef.value
     const { data } = await axios.get(url)
 
-    if (resetResults) {
+    if (resetResults === true) {
       results.value = []
     }
 
     setData(data)
   }
 
-  const fetchNextIfReachedScrollBottom = () => {
+  const fetchNextIfReachedScrollBottom = (): void => {
     const { scrollHeight } = document.body
     const { scrollY, innerHeight } = window
 
@@ -128,11 +119,11 @@ export default <
     const hasReachedBottom = scrollPosition >= scrollHeight
 
     if (hasReachedBottom) {
-      fetchNext()
+      void fetchNext()
     }
   }
 
-  if (!hasContainer) {
+  if (hasContainer !== true) {
     useEventListener('scroll', () => {
       fetchNextIfReachedScrollBottom()
     })
@@ -140,16 +131,15 @@ export default <
 
   watch(urlRef, () => {
     pagination.value = null
-    fetchNext(true)
+    void fetchNext(true)
   })
 
   return {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    results: transformer ? resultsTransformed! : results,
+    results,
     pagination,
     isLoading,
     fetchPrevious,
     fetchNext,
-    refresh,
+    refresh
   }
 }

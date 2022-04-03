@@ -1,6 +1,6 @@
 import {
   Ref,
-  ref,
+  ref
 } from 'vue'
 
 import useEventListener from './useEventListener'
@@ -11,35 +11,33 @@ export default (): {
   text: Ref<string | null>
   copied: Ref<boolean>
 } => {
-  // const isSupported = !!(navigator && 'clipboard' in navigator)
   const text = ref<string | null>(null)
   const copied = ref(false)
-  const events = [ 'copy', 'cut' ]
 
   const { start: startCopiedTimeout } = useTimeout(() => {
     copied.value = false
   }, 1500)
 
-  const copy = (value: string) => {
+  const copy = async (value: string): Promise<void> => {
     if (document.hasFocus()) {
-      navigator.clipboard.writeText(value)
+      await navigator.clipboard.writeText(value)
 
       copied.value = true
       startCopiedTimeout()
     }
   }
 
-  const update = async () => {
+  const update = async (): Promise<void> => {
     text.value = await navigator.clipboard.readText()
   }
 
-  events.forEach((ev) => useEventListener(
+  ['copy', 'cut'].forEach((ev) => useEventListener(
     navigator.clipboard, ev, update
   ))
 
   return {
     copy,
     text,
-    copied,
+    copied
   }
 }

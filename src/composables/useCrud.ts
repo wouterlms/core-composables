@@ -1,82 +1,63 @@
 import {
   Ref,
-  computed,
   onBeforeUnmount,
-  ref,
+  ref
 } from 'vue'
 
 import axios,
 {
-  AxiosResponse,
+  AxiosResponse
 } from 'axios'
 
 import { HttpMethod } from '../enums'
 
-type GetOverload<T> = {
+interface GetOverload<T> {
   (id: string | number): Promise<AxiosResponse<Readonly<T>>>
   (): Promise<AxiosResponse<Readonly<T[]>>>
 }
 
-type Options<R> = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transformer?: (obj: any) => R,
-}
-
-type Crud<T> = {
-  one: Readonly<Ref<T | null>>,
-  all: Readonly<Ref<NonNullable<T>[]>>,
+interface Crud<T, C> {
+  one: Readonly<Ref<T | null>>
+  all: Readonly<Ref<Array<NonNullable<T>>>>
   isLoading: Readonly<Ref<boolean>>
   // eslint-disable-next-line @typescript-eslint/ban-types
   delete: (id: string | number) => Promise<AxiosResponse<{}>>
   get: GetOverload<T>
-  post: (data: Partial<Record<keyof T, unknown>> | FormData) =>
-    Promise<AxiosResponse<NonNullable<T>>>
-  put: (data: Partial<Record<keyof T, unknown>> & { id: number | string } | FormData) =>
-    Promise<AxiosResponse<NonNullable<T>>>
+  post: (data: C | FormData) => Promise<AxiosResponse<NonNullable<T>>>
+  put: (
+    data: Partial<C> & { id: number | string } | FormData
+  ) => Promise<AxiosResponse<NonNullable<T>>>
   cancelRequest: () => void
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type InferReturnType<U, V> = U extends Options<infer R> ? U['transformer'] extends Function ? R : V : V
-
-export default <
-  R,
-  O extends Options<unknown> = Options<unknown>,
-  T = NonNullable<InferReturnType<O, R>>,
->(baseUrl: string, options: O = {} as O): Crud<T> => {
-  const { transformer } = options as Options<unknown>
-
-  const one = ref(null) as Ref<T | null>
-  const all = ref([]) as Ref<NonNullable<T>[]>
-
-  const oneTransformed = transformer
-    ? computed(() => transformer(one.value))
-    : undefined
-
-  const allTransformed = transformer
-    ? computed(() => all.value.map((v) => transformer(v)))
-    : undefined
+export default <R, C = Partial<Record<keyof R, unknown>>>(baseUrl: string): Crud<R, C> => {
+  const one = ref(null) as Ref<R | null>
+  const all = ref([]) as Ref<Array<NonNullable<R>>>
 
   const isLoading = ref(false)
 
   const source = axios.CancelToken.source()
 
-  const cancelRequest = (msg?: string) => source.cancel(msg)
+  const cancelRequest = (msg?: string): void => {
+    source.cancel(msg)
+  }
 
   onBeforeUnmount(() => {
     cancelRequest('onBeforeUnmount')
   })
 
-  const buildRequest = <O>(
-    httpMethod: HttpMethod, url: string, data?: unknown
-  ) => {
+  const buildRequest = async <O>(
+    httpMethod: HttpMethod,
+    url: string,
+    data?: unknown
+  ): Promise<AxiosResponse<O>> => {
     const request = httpMethod === HttpMethod.GET || httpMethod === HttpMethod.DELETE
       ? axios[httpMethod]<O>(url, {
-        cancelToken: source.token,
+        cancelToken: source.token
       })
       : axios[httpMethod]<O>(
         url, data, {
-          cancelToken: source.token,
+          cancelToken: source.token
         }
       )
 
@@ -86,19 +67,19 @@ export default <
       isLoading.value = false
     })
 
-    return request
+    return await request
   }
 
-  const get: GetOverload<T> = (id?: string | number) => {
-    const request = buildRequest<typeof id extends undefined ? T[] : T>(
-      HttpMethod.GET, id ? `${baseUrl}/${id}` : baseUrl
+  const get: GetOverload<R> = (id?: string | number) => {
+    const request = buildRequest<typeof id extends undefined ? R[] : R>(
+      HttpMethod.GET, id !== undefined ? `${baseUrl}/${id}` : baseUrl
     )
 
-    request.then(({ data }) => {
-      if (id) {
+    void request.then(({ data }) => {
+      if (id !== undefined) {
         one.value = data
       } else {
-        all.value = data as unknown as NonNullable<T>[]
+        all.value = data as unknown as Array<NonNullable<R>>
       }
     })
 
@@ -106,43 +87,39 @@ export default <
     return request as any
   }
 
-  const deleteOne = (
-    id: number | string
-    // eslint-disable-next-line @typescript-eslint/ban-types
-  ) => buildRequest<{}>(HttpMethod.DELETE, `${baseUrl}/${id}`)
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  const deleteOne: Crud<R, C>['delete'] = async (id) => await buildRequest<{}>(HttpMethod.DELETE, `${baseUrl}/${id}`)
 
-  const post = (data: Partial<Record<keyof T, unknown>> | FormData) => (
-    buildRequest<NonNullable<T>>(
+  const post: Crud<R, C>['post'] = async (data) => (
+    await buildRequest<NonNullable<R>>(
       HttpMethod.POST, baseUrl, data
     )
   )
 
-  const put = (data: Partial<Record<keyof T, unknown>> & { id: number | string } | FormData) => {
+  const put: Crud<R, C>['put'] = async (data) => {
     if (data instanceof FormData) {
       data.append('_method', 'PUT')
 
-      const id = data.get('id')
+      const id: FormDataEntryValue | null = data.get('id') ?? null
 
-      return buildRequest<NonNullable<T>>(
-        HttpMethod.POST, `${baseUrl}${id ? `/${id}` : ''}`, data
+      return await buildRequest<NonNullable<R>>(
+        HttpMethod.POST, `${baseUrl}${typeof id === 'string' ? `/${id}` : ''}`, data
       )
     }
 
-    return buildRequest<NonNullable<T>>(
-      HttpMethod.PUT, `${baseUrl}${data.id ? `/${data.id}` : ''}`, data
+    return await buildRequest<NonNullable<R>>(
+      HttpMethod.PUT, `${baseUrl}${data.id !== undefined && data.id !== null ? `/${data.id}` : ''}`, data
     )
   }
 
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    one: (transformer ? oneTransformed : one) as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    all: (transformer ? allTransformed : all) as any,
+    one,
+    all,
     isLoading,
     delete: deleteOne,
     get,
     post,
     put,
-    cancelRequest,
+    cancelRequest
   }
 }

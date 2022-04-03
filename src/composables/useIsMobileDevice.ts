@@ -1,5 +1,5 @@
-export default () => {
-  const isMobileDevice = () => {
+export default (): boolean => {
+  const isMobileDevice = (): boolean => {
     const toMatch = [
       /Android/i,
       /webOS/i,

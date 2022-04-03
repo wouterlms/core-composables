@@ -2,22 +2,22 @@ import {
   Ref,
   WritableComputedRef,
   computed,
-  getCurrentInstance,
+  getCurrentInstance
 } from 'vue'
 
 export default <T>(value: Ref<T>, key = 'modelValue'): WritableComputedRef<T> => {
   const instance = getCurrentInstance()
 
-  if (!instance) {
+  if (instance === null) {
     throw new Error('No instance for vModel')
   }
 
   return computed<T>({
-    get() {
+    get () {
       return value.value
     },
-    set(newValue) {
+    set (newValue) {
       instance.emit(`update:${key}`, newValue)
-    },
+    }
   })
 }

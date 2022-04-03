@@ -1,7 +1,6 @@
+import { Storage } from '../enums'
 import useStorage from './useStorage'
 
-import { Storage } from '../enums'
-
-export default <T>(key: string, defaultValue?: T) => useStorage(
+export default <T>(key: string, defaultValue?: T): ReturnType<typeof useStorage> => useStorage(
   Storage.LOCAL, key, defaultValue
 )

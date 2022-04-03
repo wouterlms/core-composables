@@ -4,8 +4,10 @@ interface RGB {
   b: number
 }
 
-export default () => {
-  const isRgb = (color: string) => color.startsWith('rgb')
+export default (): {
+  isDarkColor: (color: string) => boolean
+} => {
+  const isRgb = (color: string): boolean => color.startsWith('rgb')
 
   const rgbStringToObject = (rgb: string): RGB => {
     const rgbArray = rgb.replace(/[^\d,]/g, '').split(',')
@@ -13,7 +15,7 @@ export default () => {
     return {
       r: +rgbArray[0],
       g: +rgbArray[1],
-      b: +rgbArray[2],
+      b: +rgbArray[2]
     }
   }
 
@@ -38,11 +40,11 @@ export default () => {
     return {
       r,
       g,
-      b,
+      b
     }
   }
 
-  const isDarkColor = (color: string) => {
+  const isDarkColor = (color: string): boolean => {
     let rgb
 
     if (isRgb(color)) {

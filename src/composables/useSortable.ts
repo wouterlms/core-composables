@@ -1,15 +1,19 @@
-import { ref } from 'vue'
+import { Ref, ref } from 'vue'
 
 enum Direction {
   ASC = 'asc',
   DESC = 'desc'
 }
 
-export default (defaultColumn: string) => {
+export default (defaultColumn: string): {
+  direction: Ref<Direction>
+  column: Ref<string>
+  sortBy: (key: string) => void
+} => {
   const direction = ref(Direction.ASC)
   const column = ref(defaultColumn)
 
-  const sortBy = (key: string) => {
+  const sortBy = (key: string): void => {
     if (key === column.value) {
       direction.value = direction.value === Direction.DESC ? Direction.ASC : Direction.DESC
     } else {
@@ -21,6 +25,6 @@ export default (defaultColumn: string) => {
   return {
     direction,
     column,
-    sortBy,
+    sortBy
   }
 }

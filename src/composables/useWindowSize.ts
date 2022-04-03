@@ -1,12 +1,12 @@
 import {
   Ref,
-  ref,
+  ref
 } from 'vue'
 import useEventListener from './useEventListener'
 
-export default (): { width: Ref<number>; height: Ref<number> } => {
-  const width = ref(window?.innerWidth || 0)
-  const height = ref(window?.innerHeight || 0)
+export default (): { width: Ref<number>, height: Ref<number> } => {
+  const width = ref(window.innerWidth)
+  const height = ref(window.innerHeight)
 
   useEventListener('resize', () => {
     width.value = window.innerWidth
@@ -15,6 +15,6 @@ export default (): { width: Ref<number>; height: Ref<number> } => {
 
   return {
     width,
-    height,
+    height
   }
 }

@@ -1,16 +1,18 @@
-import {
-  ref,
-  watch,
-} from 'vue'
-import { Storage } from '@/enums'
 
+import {
+  Ref,
+  UnwrapRef,
+  ref,
+  watch
+} from 'vue'
 import useEventListener from './useEventListener'
 
-export default <T>(storageKey: Storage, key: string, defaultValue?: T) => {
+import { Storage } from '@/enums'
+
+export default <T>(storageKey: Storage, key: string, defaultValue?: T): Ref<UnwrapRef<T>> => {
   const storage = window[storageKey]
 
-  // eslint-disable-next-line max-len
-  const valueRef = ref<T>(storage.getItem(key)
+  const valueRef = ref<T>(storage.getItem(key) !== null
     ? JSON.parse(storage.getItem(key) as string)
     : defaultValue)
 
@@ -24,12 +26,12 @@ export default <T>(storageKey: Storage, key: string, defaultValue?: T) => {
 
       window.dispatchEvent(new StorageEvent('storage', {
         key,
-        newValue: JSON.stringify(valueRef.value),
+        newValue: JSON.stringify(valueRef.value)
       }))
     }, { deep: true }
   )
 
-  if (defaultValue && storage.getItem(key) === null) {
+  if ((defaultValue != null) && storage.getItem(key) === null) {
     storage.setItem(key, JSON.stringify(defaultValue))
   }
 

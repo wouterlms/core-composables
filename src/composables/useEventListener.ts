@@ -27,7 +27,7 @@ export default (...args: any[]): (() => void) => {
     event, listener, options
   )
 
-  const destroy = () => {
+  const destroy = (): void => {
     target.removeEventListener(event, listener)
   }
 

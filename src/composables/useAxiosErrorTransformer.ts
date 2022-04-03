@@ -1,17 +1,17 @@
 import { AxiosError } from 'axios'
 
-export default () => {
-  const transform = (errors: AxiosError) => {
-    const errorsObj: Record<string, string[]> = errors.response?.data.errors
+export default (): (errors: AxiosError) => Record<string, string> => {
+  const transform = (errors: AxiosError): Record<string, string> => {
+    const errorsObj: Record<string, string[]> | null = errors.response?.data.errors ?? null
 
-    if (!errorsObj) {
+    if (errorsObj == null) {
       return {}
     }
 
     const errorsMapped: Record<string, string> = {}
 
-    Object.entries(errorsObj).forEach(([ key, value ]) => {
-      [ errorsMapped[key] ] = value
+    Object.entries(errorsObj).forEach(([key, value]) => {
+      [errorsMapped[key]] = value
     })
 
     return errorsMapped

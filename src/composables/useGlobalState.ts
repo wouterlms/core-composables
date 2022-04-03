@@ -1,13 +1,12 @@
 import {
   Ref,
   effectScope,
-  ref,
+  ref
 } from 'vue'
 
+import { Storage } from '../enums'
 import useLocalStorage from './useLocalStorage'
 import useSessionStorage from './useSessionStorage'
-
-import { Storage } from '../enums'
 
 interface Options {
   storage?: Storage
@@ -25,10 +24,10 @@ const users = useGlobalState<User[]>([], {
 export default () => users
 */
 
-export default <T>(defaultValue: T, options: Options = {}) => {
+export default <T>(defaultValue: T, options: Options = {}): Ref<T> => {
   const { storage, storageKey } = options
 
-  if (storage !== undefined && !storageKey) {
+  if (storage !== undefined && storageKey === undefined) {
     throw new Error('`storageKey` is required when using `storage`')
   }
 

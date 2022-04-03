@@ -1,6 +1,6 @@
-export default () => {
-  const fileToCanvasImageSource = (file: File): Promise<HTMLImageElement> => (
-    new Promise((resolve) => {
+export default (): (image: File, quality?: number) => Promise<File> => {
+  const fileToCanvasImageSource = async (file: File): Promise<HTMLImageElement> => (
+    await new Promise((resolve) => {
       const img = new Image()
 
       img.onload = () => {
@@ -11,19 +11,19 @@ export default () => {
     })
   )
 
-  const base64ToFile = (
+  const base64ToFile = async (
     base64: string, mimeType: string
-  ): Promise<File> => new Promise((resolve) => {
-    fetch(base64)
-      .then((res) => res.blob())
+  ): Promise<File> => await new Promise((resolve) => {
+    void fetch(base64)
+      .then(async (res) => await res.blob())
       .then((blob) => resolve(new File(
-        [ blob ], 'image', {
-          type: mimeType,
+        [blob], 'image', {
+          type: mimeType
         }
       )))
   })
 
-  const compress = async (image: File, quality = 0.8) => {
+  const compress = async (image: File, quality = 0.8): Promise<File> => {
     if (quality < 0 || quality > 1) {
       throw Error('Quality must be a number between 0 and 1')
     }
@@ -41,7 +41,7 @@ export default () => {
 
     const base64 = canvas.toDataURL(image.type, quality)
 
-    return base64ToFile(base64, image.type)
+    return await base64ToFile(base64, image.type)
   }
 
   return compress

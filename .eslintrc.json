@@ -1,0 +1,69 @@
+{
+  "env": {
+    "es2021": true,
+    "node": true,
+    "commonjs": true
+  },
+
+  "extends": [
+    "appwise"
+  ],
+
+  "parserOptions": {
+    "project": "tsconfig.json"
+  },
+
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [
+          ".js",
+          ".ts",
+          ".d.ts",
+          ".json",
+          ".vue"
+        ]
+      },
+      "alias": {
+        "map": [
+          [
+            "@",
+            "./src",
+            "~",
+            "./"
+          ]
+        ],
+        "extensions": [
+          ".js",
+          ".vue",
+          ".ts",
+          ".d.ts"
+        ]
+      }
+    }
+  },
+
+  "rules": {
+    // "@typescript-eslint/strict-boolean-expression": [
+    //   2, {
+    //     "allowNullableObject": false
+    //   }
+    // ]
+    "max-len": [
+      "error", {
+        "code": 100,
+        "comments": 75,
+        "ignoreStrings": true,
+        "ignoreTemplateLiterals": true,
+        "ignoreUrls": true,
+        "ignoreRegExpLiterals": true
+      }
+    ],
+
+    "sort-imports": [
+      "error", {
+        "ignoreDeclarationSort": true
+      }
+    ]
+  }
+}

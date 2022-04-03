@@ -4,18 +4,21 @@ export default (
   fn: (...args: unknown[]) => unknown,
   ms: number,
   options: { immediate: boolean } = { immediate: true }
-) => {
+): {
+    start: () => void
+    stop: () => void
+  } => {
   const { immediate } = options
 
   let interval: ReturnType<typeof setInterval> | null = null
 
-  const stop = () => {
-    if (interval) {
+  const stop = (): void => {
+    if (interval !== null) {
       clearInterval(interval)
     }
   }
 
-  const start = () => {
+  const start = (): void => {
     stop()
 
     interval = setInterval(() => {
@@ -33,6 +36,6 @@ export default (
 
   return {
     start,
-    stop,
+    stop
   }
 }

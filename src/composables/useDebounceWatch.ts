@@ -2,7 +2,7 @@ import {
   Ref,
   WatchOptions,
   isRef,
-  watch,
+  watch
 } from 'vue'
 
 export default <T>(
@@ -17,7 +17,7 @@ export default <T>(
   watch(
     ref,
     () => {
-      if (debounceTimeout) {
+      if (debounceTimeout !== null) {
         clearTimeout(debounceTimeout)
       }
 
