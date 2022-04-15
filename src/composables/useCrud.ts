@@ -16,7 +16,7 @@ interface GetOverload<T> {
   (): Promise<AxiosResponse<Readonly<T[]>>>
 }
 
-interface Crud<T, C> {
+interface Crud<T, C, U> {
   one: Readonly<Ref<T | null>>
   all: Readonly<Ref<Array<NonNullable<T>>>>
   isLoading: Readonly<Ref<boolean>>
@@ -25,12 +25,16 @@ interface Crud<T, C> {
   get: GetOverload<T>
   post: (data: C | FormData) => Promise<AxiosResponse<NonNullable<T>>>
   put: (
-    data: Partial<C> & { id: number | string } | FormData
+    data: U & { id: number | string } | FormData
   ) => Promise<AxiosResponse<NonNullable<T>>>
   cancelRequest: () => void
 }
 
-export default <R, C = Partial<Record<keyof R, unknown>>>(baseUrl: string): Crud<R, C> => {
+export default <
+  R,
+  C = Partial<Record<keyof R, unknown>>,
+  U = Partial<Record<keyof R, unknown>>
+>(baseUrl: string): Crud<R, C, U> => {
   const one = ref(null) as Ref<R | null>
   const all = ref([]) as Ref<Array<NonNullable<R>>>
 
@@ -88,15 +92,15 @@ export default <R, C = Partial<Record<keyof R, unknown>>>(baseUrl: string): Crud
   }
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  const deleteOne: Crud<R, C>['delete'] = async (id) => await buildRequest<{}>(HttpMethod.DELETE, `${baseUrl}/${id}`)
+  const deleteOne: Crud<R, C, U>['delete'] = async (id) => await buildRequest<{}>(HttpMethod.DELETE, `${baseUrl}/${id}`)
 
-  const post: Crud<R, C>['post'] = async (data) => (
+  const post: Crud<R, C, U>['post'] = async (data) => (
     await buildRequest<NonNullable<R>>(
       HttpMethod.POST, baseUrl, data
     )
   )
 
-  const put: Crud<R, C>['put'] = async (data) => {
+  const put: Crud<R, C, U>['put'] = async (data) => {
     if (data instanceof FormData) {
       data.append('_method', 'PUT')
 

@@ -18,15 +18,15 @@ interface Pagination {
 }
 
 interface Options {
-  replaceOnFetch?: boolean
-  hasContainer?: boolean
+  replaceResults?: boolean
+  disableFullPage?: boolean
 }
 
 export default <R, O extends Options = Options>(
   url: string | Ref<string>,
   options: O = {
-    replaceOnFetch: false,
-    hasContainer: false
+    replaceResults: false,
+    disableFullPage: true
   } as unknown as O
 ): {
   results: Ref<R[]>
@@ -42,17 +42,14 @@ export default <R, O extends Options = Options>(
   fetchNext: (resetResults?: boolean | undefined) => Promise<void>
   refresh: () => Promise<void>
 } => {
-  const urlRef = isRef(url) ? url : ref(url)
-
   const {
-    replaceOnFetch,
-    hasContainer
+    replaceResults,
+    disableFullPage
   } = options
 
+  const urlRef = isRef(url) ? url : ref(url)
   const pagination = ref<Pagination | null>(null)
-
   const results = ref<R[]>([]) as Ref<R[]>
-
   const isLoading = ref(false)
 
   const setData = (data: {
@@ -60,7 +57,7 @@ export default <R, O extends Options = Options>(
     links: { next: string | null, previous: string | null }
     meta: { total: number, pages: number, page: number }
   }): void => {
-    if (replaceOnFetch === true) {
+    if (replaceResults === true) {
       results.value = data.data
     } else {
       results.value = [...results.value, ...data.data]
@@ -95,14 +92,15 @@ export default <R, O extends Options = Options>(
   }
 
   const fetchNext = async (resetResults?: boolean): Promise<void> => {
-    if (isLoading.value || ((pagination.value != null) && typeof pagination.value?.next === 'string')) {
+    if (isLoading.value || (pagination.value !== null && typeof pagination.value?.next !== 'string')) {
       return
     }
 
-    isLoading.value = true
-
     const url = typeof pagination.value?.next === 'string' ? pagination.value.next : urlRef.value
+
     const { data } = await axios.get(url)
+
+    isLoading.value = true
 
     if (resetResults === true) {
       results.value = []
@@ -123,7 +121,7 @@ export default <R, O extends Options = Options>(
     }
   }
 
-  if (hasContainer !== true) {
+  if (disableFullPage !== true) {
     useEventListener('scroll', () => {
       fetchNextIfReachedScrollBottom()
     })
