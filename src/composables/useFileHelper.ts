@@ -1,7 +1,7 @@
 export default (): {
   formatBytes: (bytes: number, decimals?: number) => string
   toImage: (file: File) => Promise<HTMLImageElement>
-  base64ToFile: (base64: string) => Promise<File>
+  base64ToFile: (base64: string, originalFile?: File) => Promise<File>
 } => {
   const formatBytes = (bytes: number, decimals = 2): string => {
     if (bytes === 0) return '0 Bytes'
@@ -32,17 +32,17 @@ export default (): {
       image.src = URL.createObjectURL((file))
     })
 
-  const base64ToFile = async (
-    base64: string
-  ): Promise<File> => await new Promise((resolve) => {
-    void fetch(base64)
-      .then(async (res) => await res.blob())
-      .then((blob) => resolve(new File(
-        [blob], 'image', {
-          type: 'image/png'
-        }
-      )))
-  })
+  const base64ToFile = async (base64: string, originalFile?: File): Promise<File> => {
+    const result = await fetch(base64)
+    const blob = await result.blob()
+
+    const file = new File([blob], originalFile?.name ?? 'image', {
+      type: originalFile?.type ?? 'image/png',
+      lastModified: originalFile?.lastModified
+    })
+
+    return file
+  }
 
   return {
     formatBytes,

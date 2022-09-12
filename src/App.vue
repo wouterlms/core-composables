@@ -1,24 +1,11 @@
 <script setup lang="ts">
-import axios from 'axios'
-import { useCrud } from './composables';
+import { useFileInput } from '@/composables'
 
-const { get } = useCrud('https://jsonplaceholder.typicode.com/users')
-
-const test = async() => {
-  try {
-    const { data } = await get(1)
-    const { data: data2 } = await get(data.id)
-  }
-  catch(e) {
-    console.log(e)
-  }
-
-  console.log('done')
-}
-
-test()
+const { browse } = useFileInput()
 </script>
 
 <template>
-  <div></div>
+  <div>
+    <button type="button" @click="() => browse({ mimeTypes: [] })">test</button>
+  </div>
 </template>

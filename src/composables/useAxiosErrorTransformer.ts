@@ -2,6 +2,7 @@ import { AxiosError } from 'axios'
 
 export default (): (errors: AxiosError) => Record<string, string> => {
   const transform = (errors: AxiosError): Record<string, string> => {
+    // @ts-expect-error TODO: fix later
     const errorsObj: Record<string, string[]> | null = errors.response?.data.errors ?? null
 
     if (errorsObj == null) {

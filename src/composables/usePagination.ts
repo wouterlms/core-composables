@@ -7,8 +7,6 @@ import {
 
 import axios from 'axios'
 
-import useEventListener from './useEventListener'
-
 interface Pagination {
   previous: string | null
   next: string | null
@@ -19,15 +17,13 @@ interface Pagination {
 
 interface Options {
   replaceResults?: boolean
-  disableFullPage?: boolean
 }
 
-export default <R, O extends Options = Options>(
+export default <R>(
   url: string | Ref<string>,
-  options: O = {
-    replaceResults: false,
-    disableFullPage: true
-  } as unknown as O
+  options: Options = {
+    replaceResults: false
+  }
 ): {
   results: Ref<R[]>
   pagination: Ref<{
@@ -42,10 +38,7 @@ export default <R, O extends Options = Options>(
   fetchNext: (resetResults?: boolean | undefined) => Promise<void>
   refresh: () => Promise<void>
 } => {
-  const {
-    replaceResults,
-    disableFullPage
-  } = options
+  const { replaceResults } = options
 
   const urlRef = isRef(url) ? url : ref(url)
   const pagination = ref<Pagination | null>(null)
@@ -98,33 +91,15 @@ export default <R, O extends Options = Options>(
 
     const url = typeof pagination.value?.next === 'string' ? pagination.value.next : urlRef.value
 
-    const { data } = await axios.get(url)
-
     isLoading.value = true
+
+    const { data } = await axios.get(url)
 
     if (resetResults === true) {
       results.value = []
     }
 
     setData(data)
-  }
-
-  const fetchNextIfReachedScrollBottom = (): void => {
-    const { scrollHeight } = document.body
-    const { scrollY, innerHeight } = window
-
-    const scrollPosition = scrollY + innerHeight
-    const hasReachedBottom = scrollPosition >= scrollHeight
-
-    if (hasReachedBottom) {
-      void fetchNext()
-    }
-  }
-
-  if (disableFullPage !== true) {
-    useEventListener('scroll', () => {
-      fetchNextIfReachedScrollBottom()
-    })
   }
 
   watch(urlRef, () => {

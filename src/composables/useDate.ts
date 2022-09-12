@@ -1,19 +1,9 @@
-interface ReadableDateOptions {
-  weekday?: 'long' | 'short' | 'narrow' | undefined
-  month?: 'long' | 'short' | 'narrow' | undefined
-  year?: 'numeric'
-  day?: 'numeric'
-  hour?: 'numeric'
-  minute?: 'numeric'
-  second?: 'numeric'
-}
-
 let defaultLocale = navigator.language
 
 export default (): {
   setLocale: (locale: string) => void
   areEqualDate: (date1: Date, date2: Date) => boolean
-  toReadableDate: (date: Date, options?: ReadableDateOptions, locale?: string) => string
+  toReadableDate: (date: Date, options?: Intl.DateTimeFormatOptions, locale?: string) => string
   getDaysBetween: (from: Date, until: Date) => number
   isBefore: (date: Date, compareTo: Date) => boolean
   isAfter: (date: Date, compareTo: Date) => boolean
@@ -41,9 +31,13 @@ export default (): {
   const isAfter = (date: Date, compareTo: Date): boolean => date.getTime() > compareTo.getTime()
 
   const toReadableDate = (
-    date: Date, options: ReadableDateOptions = {}, locale = defaultLocale
+    date: Date, options: Intl.DateTimeFormatOptions = {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }, locale = defaultLocale
   ): string => (
-    date.toLocaleDateString(locale, options)
+    date.toLocaleString(locale, options)
   )
 
   return {
